@@ -22,9 +22,24 @@
             overflow-y: auto;
             margin-bottom: 20px;
         }
+        .status-bar {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+        .status-bar div {
+            background: #fff;
+            border: 1px solid #ccc;
+            padding: 10px;
+            width: 30%;
+            text-align: center;
+        }
+        .actions, .hand {
+            text-align: center;
+            margin-top: 20px;
+        }
         button {
-            display: block;
-            margin: 10px auto;
+            margin: 5px;
             padding: 10px 20px;
             font-size: 16px;
         }
@@ -32,91 +47,104 @@
 </head>
 <body>
     <h1>Euphoria: Clash of Strategies</h1>
-    <h2>Log delle Azioni</h2>
     <div id="log"></div>
-    <div id="scelte"></div>
+    <div class="status-bar">
+        <div id="player1-status"></div>
+        <div id="player2-status"></div>
+    </div>
+    <div class="hand" id="hand"></div>
+    <div class="actions" id="actions"></div>
 
     <script>
-        // Giocatori e Mazzo Unificato
-        let giocatore1 = { nome: "Dionis", puntiVita: 3, risorseAlfa: 3, risorseBeta: 3, mano: [] };
-        let giocatore2 = { nome: "Edo", puntiVita: 3, risorseAlfa: 3, risorseBeta: 3, mano: [] };
-
         let mazzoUnificato = [
             { tipo: "Messaggero", nome: "Bilanciato1", categoria: "Bilanciato", vita: 1, attacco: 0, velocita: 0 },
-            { tipo: "Messaggero", nome: "Bilanciato2", categoria: "Bilanciato", vita: 1, attacco: 0, velocita: 0 },
-            { tipo: "Messaggero", nome: "Bilanciato3", categoria: "Bilanciato", vita: 1, attacco: 0, velocita: 0 },
-            { tipo: "Messaggero", nome: "Bilanciato4", categoria: "Bilanciato", vita: 1, attacco: 0, velocita: 0 },
             { tipo: "Messaggero", nome: "Tank1", categoria: "Tank", vita: 1.5, attacco: 0, velocita: 0 },
-            { tipo: "Messaggero", nome: "Tank2", categoria: "Tank", vita: 1.5, attacco: 0, velocita: 0 },
-            { tipo: "Messaggero", nome: "Attaccante1", categoria: "Attaccante", vita: 1, attacco: 0.5, velocita: 0 },
-            { tipo: "Messaggero", nome: "Attaccante2", categoria: "Attaccante", vita: 1, attacco: 0.5, velocita: 0 },
-            { tipo: "Messaggero", nome: "Velocista1", categoria: "Velocista", vita: 1, attacco: 0, velocita: 0.5 },
-            { tipo: "Messaggero", nome: "Velocista2", categoria: "Velocista", vita: 1, attacco: 0, velocita: 0.5 },
             { tipo: "Carta", nome: "+1 Vita Permanente" },
-            { tipo: "Carta", nome: "+1 Vita Permanente" },
-            { tipo: "Carta", nome: "+1 Attacco Temporaneo" },
-            { tipo: "Carta", nome: "+1 Velocità Temporanea" },
-            { tipo: "Carta", nome: "Divieto di Attacco" },
-            { tipo: "Carta", nome: "Ruba Alfa" },
-            { tipo: "Carta", nome: "Ruba Beta" },
-            { tipo: "Carta", nome: "Recupera un Messaggero Sconfitto" },
-            { tipo: "Carta", nome: "Scambia Messaggero in Campo" }
         ];
-
-        // Mischia il mazzo
         mazzoUnificato.sort(() => Math.random() - 0.5);
+
+        let giocatore1 = { nome: "Dionis", puntiVita: 3, risorseAlfa: 3, risorseBeta: 3, mano: [], messaggeroAttivo: null };
+        let giocatore2 = { nome: "Edo", puntiVita: 3, risorseAlfa: 3, risorseBeta: 3, mano: [], messaggeroAttivo: null };
 
         let turno = 0;
         let logDiv = document.getElementById("log");
-        let scelteDiv = document.getElementById("scelte");
+        let actionsDiv = document.getElementById("actions");
+        let handDiv = document.getElementById("hand");
 
         function scriviLog(messaggio) {
             logDiv.innerHTML += `<p>${messaggio}</p>`;
             logDiv.scrollTop = logDiv.scrollHeight;
         }
 
+        function aggiornaStato() {
+            const player1Status = `
+                <h3>${giocatore1.nome}</h3>
+                <p>Punti Vita: ${giocatore1.puntiVita}</p>
+                <p>Risorse Alfa: ${giocatore1.risorseAlfa}</p>
+                <p>Risorse Beta: ${giocatore1.risorseBeta}</p>
+                <p>Messaggero Attivo: ${giocatore1.messaggeroAttivo ? giocatore1.messaggeroAttivo.nome : "Nessuno"}</p>
+            `;
+            const player2Status = `
+                <h3>${giocatore2.nome}</h3>
+                <p>Punti Vita: ${giocatore2.puntiVita}</p>
+                <p>Risorse Alfa: ${giocatore2.risorseAlfa}</p>
+                <p>Risorse Beta: ${giocatore2.risorseBeta}</p>
+                <p>Messaggero Attivo: ${giocatore2.messaggeroAttivo ? giocatore2.messaggeroAttivo.nome : "Nessuno"}</p>
+            `;
+            document.getElementById("player1-status").innerHTML = player1Status;
+            document.getElementById("player2-status").innerHTML = player2Status;
+        }
+
         function pescaIniziale() {
-            giocatore1.mano.push(mazzoUnificato.pop());
-            giocatore2.mano.push(mazzoUnificato.pop());
-            scriviLog(`${giocatore1.nome} pesca ${giocatore1.mano[0].nome}.`);
-            scriviLog(`${giocatore2.nome} pesca ${giocatore2.mano[0].nome}.`);
-
-            const velocita1 = giocatore1.mano[0].velocita || 0;
-            const velocita2 = giocatore2.mano[0].velocita || 0;
-            const segnalino = velocita1 > velocita2 ? giocatore1.nome : velocita2 > velocita1 ? giocatore2.nome : "casuale";
-            scriviLog(`Il segnalino velocità è assegnato a ${segnalino === "casuale" ? "un giocatore casuale" : segnalino}.`);
-
+            giocatore1.messaggeroAttivo = mazzoUnificato.pop();
+            giocatore2.messaggeroAttivo = mazzoUnificato.pop();
+            scriviLog(`${giocatore1.nome} pesca ${giocatore1.messaggeroAttivo.nome}.`);
+            scriviLog(`${giocatore2.nome} pesca ${giocatore2.messaggeroAttivo.nome}.`);
+            aggiornaStato();
             mostraScelte();
         }
 
         function mostraScelte() {
             const giocatoreAttivo = turno % 2 === 0 ? giocatore1 : giocatore2;
-            scelteDiv.innerHTML = `
-                <h3>È il turno di ${giocatoreAttivo.nome}</h3>
-                <button onclick="eseguiAzione('alloca')">Allocare risorse</button>
-                <button onclick="eseguiAzione('attacca')">Attaccare</button>
-                <button onclick="eseguiAzione('cambia')">Cambiare Messaggero</button>
+            handDiv.innerHTML = `
+                <h3>Mano di ${giocatoreAttivo.nome}</h3>
+                ${giocatoreAttivo.mano.map(carta => `<p>${carta.nome}</p>`).join("")}
+            `;
+            actionsDiv.innerHTML = `
+                <h3>Turno di ${giocatoreAttivo.nome}</h3>
+                <button onclick="attacca()">Attaccare</button>
             `;
         }
 
-        function eseguiAzione(azione) {
+        function attacca() {
             const giocatoreAttivo = turno % 2 === 0 ? giocatore1 : giocatore2;
-            if (azione === "alloca") {
-                scriviLog(`${giocatoreAttivo.nome} sceglie di allocare risorse.`);
-            } else if (azione === "attacca") {
-                scriviLog(`${giocatoreAttivo.nome} sceglie di attaccare.`);
-            } else if (azione === "cambia") {
-                scriviLog(`${giocatoreAttivo.nome} sceglie di cambiare Messaggero.`);
-            }
-            turno++;
-            pescaFineTurno(giocatoreAttivo);
-            mostraScelte();
-        }
+            const avversario = turno % 2 === 0 ? giocatore2 : giocatore1;
 
-        function pescaFineTurno(giocatore) {
-            const pesca = mazzoUnificato.pop();
-            giocatore.mano.push(pesca);
-            scriviLog(`${giocatore.nome} pesca ${pesca.nome}.`);
+            if (!giocatoreAttivo.messaggeroAttivo || !avversario.messaggeroAttivo) {
+                scriviLog("Attacco non possibile: uno dei giocatori non ha un Messaggero attivo.");
+                return;
+            }
+
+            const danno = giocatoreAttivo.messaggeroAttivo.attacco;
+            avversario.messaggeroAttivo.vita -= danno;
+
+            if (avversario.messaggeroAttivo.vita <= 0) {
+                avversario.puntiVita -= 1;
+                scriviLog(`${giocatoreAttivo.nome} sconfigge il Messaggero di ${avversario.nome}!`);
+                avversario.messaggeroAttivo = null;
+            } else {
+                scriviLog(`${giocatoreAttivo.nome} infligge ${danno} danni a ${avversario.nome}!`);
+            }
+
+            if (avversario.puntiVita <= 0) {
+                scriviLog(`${giocatoreAttivo.nome} ha vinto la partita!`);
+                actionsDiv.innerHTML = `<h2>${giocatoreAttivo.nome} è il vincitore!</h2>`;
+                return;
+            }
+
+            turno++;
+            aggiornaStato();
+            mostraScelte();
         }
 
         pescaIniziale();
