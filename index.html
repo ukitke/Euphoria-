@@ -57,19 +57,18 @@
     <div class="actions" id="actions"></div>
 
     <script>
-        let mazzoUnificato = [
+        let mazzoIniziale = [
             { tipo: "Messaggero", nome: "Bilanciato1", categoria: "Bilanciato", vita: 1, attacco: 0, velocita: 0 },
             { tipo: "Messaggero", nome: "Tank1", categoria: "Tank", vita: 1.5, attacco: 0, velocita: 0 },
             { tipo: "Carta", nome: "+1 Vita Permanente" },
             { tipo: "Carta", nome: "Scambia Messaggero" },
         ];
-        mazzoUnificato.sort(() => Math.random() - 0.5);
 
-        let giocatore1 = { nome: "Dionis", puntiVita: 3, risorseAlfa: 3, risorseBeta: 3, mano: [], messaggeroAttivo: null };
-        let giocatore2 = { nome: "Edo", puntiVita: 3, risorseAlfa: 3, risorseBeta: 3, mano: [], messaggeroAttivo: null };
-        let segnalinoVelocita = null;
-
-        let turno = 0;
+        let mazzoUnificato;
+        let giocatore1;
+        let giocatore2;
+        let segnalinoVelocita;
+        let turno;
         let logDiv = document.getElementById("log");
         let actionsDiv = document.getElementById("actions");
         let handDiv = document.getElementById("hand");
@@ -77,6 +76,23 @@
         function scriviLog(messaggio) {
             logDiv.innerHTML += `<p>${messaggio}</p>`;
             logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function resetGioco() {
+            mazzoUnificato = [...mazzoIniziale];
+            mazzoUnificato.sort(() => Math.random() - 0.5);
+
+            giocatore1 = { nome: "Dionis", puntiVita: 3, risorseAlfa: 3, risorseBeta: 3, mano: [], messaggeroAttivo: null };
+            giocatore2 = { nome: "Edo", puntiVita: 3, risorseAlfa: 3, risorseBeta: 3, mano: [], messaggeroAttivo: null };
+            segnalinoVelocita = null;
+            turno = 0;
+
+            scriviLog("Il gioco è stato resettato.");
+            pescaIniziale(giocatore1);
+            pescaIniziale(giocatore2);
+            assegnaSegnalinoVelocita();
+            aggiornaStato();
+            mostraScelte();
         }
 
         function aggiornaStato() {
@@ -100,6 +116,20 @@
             document.getElementById("segnalino-velocita").innerHTML = velocitaStatus;
         }
 
+        function pescaIniziale(giocatore) {
+            while (mazzoUnificato.length > 0) {
+                const carta = mazzoUnificato.pop();
+                if (carta.tipo === "Messaggero") {
+                    giocatore.messaggeroAttivo = carta;
+                    scriviLog(`${giocatore.nome} pesca ${carta.nome}.`);
+                    break;
+                } else {
+                    giocatore.mano.push(carta);
+                }
+            }
+            mazzoUnificato.sort(() => Math.random() - 0.5);
+        }
+
         function assegnaSegnalinoVelocita() {
             const velocita1 = giocatore1.messaggeroAttivo ? giocatore1.messaggeroAttivo.velocita : 0;
             const velocita2 = giocatore2.messaggeroAttivo ? giocatore2.messaggeroAttivo.velocita : 0;
@@ -113,16 +143,6 @@
             scriviLog(`${segnalinoVelocita.nome} riceve il Segnalino Velocità.`);
         }
 
-        function pescaIniziale() {
-            giocatore1.messaggeroAttivo = mazzoUnificato.pop();
-            giocatore2.messaggeroAttivo = mazzoUnificato.pop();
-            scriviLog(`${giocatore1.nome} pesca ${giocatore1.messaggeroAttivo.nome}.`);
-            scriviLog(`${giocatore2.nome} pesca ${giocatore2.messaggeroAttivo.nome}.`);
-            assegnaSegnalinoVelocita();
-            aggiornaStato();
-            mostraScelte();
-        }
-
         function mostraScelte() {
             const giocatoreAttivo = turno % 2 === 0 ? giocatore1 : giocatore2;
             handDiv.innerHTML = `
@@ -131,18 +151,14 @@
             `;
             actionsDiv.innerHTML = `
                 <h3>Turno di ${giocatoreAttivo.nome}</h3>
-                <button onclick="allocaRisorsa('alfa')">Allocare Risorsa Alfa</button>
-                <button onclick="allocaRisorsa('beta')">Allocare Risorsa Beta</button>
+                <button onclick="resetGioco()">Restart</button>
+                <button onclick="dionisMaestro()">Dionis sei il mio maestro!</button>
                 <button onclick="attacca()">Attaccare</button>
-                <button onclick="scambiaMessaggero()" ${giocatoreAttivo === segnalinoVelocita ? "" : "disabled"}>Scambiare Messaggero</button>
             `;
         }
 
-        function allocaRisorsa(tipo) {
-            scriviLog(`Risorsa ${tipo} allocata! (logica da implementare)`);
-            turno++;
-            aggiornaStato();
-            mostraScelte();
+        function dionisMaestro() {
+            scriviLog("Karlo Drogo usa Luna Piena ma si incula da solo.");
         }
 
         function attacca() {
@@ -152,14 +168,7 @@
             mostraScelte();
         }
 
-        function scambiaMessaggero() {
-            scriviLog("Messaggero scambiato! (logica da implementare)");
-            turno++;
-            aggiornaStato();
-            mostraScelte();
-        }
-
-        pescaIniziale();
+        resetGioco();
     </script>
 </body>
 </html>
