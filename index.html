@@ -51,6 +51,7 @@
     <div class="status-bar">
         <div id="player1-status"></div>
         <div id="player2-status"></div>
+        <div id="segnalino-velocita"></div>
     </div>
     <div class="hand" id="hand"></div>
     <div class="actions" id="actions"></div>
@@ -60,11 +61,13 @@
             { tipo: "Messaggero", nome: "Bilanciato1", categoria: "Bilanciato", vita: 1, attacco: 0, velocita: 0 },
             { tipo: "Messaggero", nome: "Tank1", categoria: "Tank", vita: 1.5, attacco: 0, velocita: 0 },
             { tipo: "Carta", nome: "+1 Vita Permanente" },
+            { tipo: "Carta", nome: "Scambia Messaggero" },
         ];
         mazzoUnificato.sort(() => Math.random() - 0.5);
 
         let giocatore1 = { nome: "Dionis", puntiVita: 3, risorseAlfa: 3, risorseBeta: 3, mano: [], messaggeroAttivo: null };
         let giocatore2 = { nome: "Edo", puntiVita: 3, risorseAlfa: 3, risorseBeta: 3, mano: [], messaggeroAttivo: null };
+        let segnalinoVelocita = null;
 
         let turno = 0;
         let logDiv = document.getElementById("log");
@@ -91,8 +94,23 @@
                 <p>Risorse Beta: ${giocatore2.risorseBeta}</p>
                 <p>Messaggero Attivo: ${giocatore2.messaggeroAttivo ? giocatore2.messaggeroAttivo.nome : "Nessuno"}</p>
             `;
+            const velocitaStatus = `<h3>Segnalino Velocità</h3><p>Attuale: ${segnalinoVelocita ? segnalinoVelocita.nome : "Nessuno"}</p>`;
             document.getElementById("player1-status").innerHTML = player1Status;
             document.getElementById("player2-status").innerHTML = player2Status;
+            document.getElementById("segnalino-velocita").innerHTML = velocitaStatus;
+        }
+
+        function assegnaSegnalinoVelocita() {
+            const velocita1 = giocatore1.messaggeroAttivo ? giocatore1.messaggeroAttivo.velocita : 0;
+            const velocita2 = giocatore2.messaggeroAttivo ? giocatore2.messaggeroAttivo.velocita : 0;
+            if (velocita1 > velocita2) {
+                segnalinoVelocita = giocatore1;
+            } else if (velocita2 > velocita1) {
+                segnalinoVelocita = giocatore2;
+            } else {
+                segnalinoVelocita = Math.random() > 0.5 ? giocatore1 : giocatore2;
+            }
+            scriviLog(`${segnalinoVelocita.nome} riceve il Segnalino Velocità.`);
         }
 
         function pescaIniziale() {
@@ -100,6 +118,7 @@
             giocatore2.messaggeroAttivo = mazzoUnificato.pop();
             scriviLog(`${giocatore1.nome} pesca ${giocatore1.messaggeroAttivo.nome}.`);
             scriviLog(`${giocatore2.nome} pesca ${giocatore2.messaggeroAttivo.nome}.`);
+            assegnaSegnalinoVelocita();
             aggiornaStato();
             mostraScelte();
         }
@@ -112,36 +131,29 @@
             `;
             actionsDiv.innerHTML = `
                 <h3>Turno di ${giocatoreAttivo.nome}</h3>
+                <button onclick="allocaRisorsa('alfa')">Allocare Risorsa Alfa</button>
+                <button onclick="allocaRisorsa('beta')">Allocare Risorsa Beta</button>
                 <button onclick="attacca()">Attaccare</button>
+                <button onclick="scambiaMessaggero()" ${giocatoreAttivo === segnalinoVelocita ? "" : "disabled"}>Scambiare Messaggero</button>
             `;
         }
 
+        function allocaRisorsa(tipo) {
+            scriviLog(`Risorsa ${tipo} allocata! (logica da implementare)`);
+            turno++;
+            aggiornaStato();
+            mostraScelte();
+        }
+
         function attacca() {
-            const giocatoreAttivo = turno % 2 === 0 ? giocatore1 : giocatore2;
-            const avversario = turno % 2 === 0 ? giocatore2 : giocatore1;
+            scriviLog("Attacco effettuato! (logica da implementare)");
+            turno++;
+            aggiornaStato();
+            mostraScelte();
+        }
 
-            if (!giocatoreAttivo.messaggeroAttivo || !avversario.messaggeroAttivo) {
-                scriviLog("Attacco non possibile: uno dei giocatori non ha un Messaggero attivo.");
-                return;
-            }
-
-            const danno = giocatoreAttivo.messaggeroAttivo.attacco;
-            avversario.messaggeroAttivo.vita -= danno;
-
-            if (avversario.messaggeroAttivo.vita <= 0) {
-                avversario.puntiVita -= 1;
-                scriviLog(`${giocatoreAttivo.nome} sconfigge il Messaggero di ${avversario.nome}!`);
-                avversario.messaggeroAttivo = null;
-            } else {
-                scriviLog(`${giocatoreAttivo.nome} infligge ${danno} danni a ${avversario.nome}!`);
-            }
-
-            if (avversario.puntiVita <= 0) {
-                scriviLog(`${giocatoreAttivo.nome} ha vinto la partita!`);
-                actionsDiv.innerHTML = `<h2>${giocatoreAttivo.nome} è il vincitore!</h2>`;
-                return;
-            }
-
+        function scambiaMessaggero() {
+            scriviLog("Messaggero scambiato! (logica da implementare)");
             turno++;
             aggiornaStato();
             mostraScelte();
