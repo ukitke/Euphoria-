@@ -59,16 +59,27 @@
     <script>
         let mazzoIniziale = [
             { tipo: "Messaggero", nome: "Bilanciato1", categoria: "Bilanciato", vita: 1, attacco: 0, velocita: 0 },
+            { tipo: "Messaggero", nome: "Bilanciato2", categoria: "Bilanciato", vita: 1, attacco: 0, velocita: 0 },
+            { tipo: "Messaggero", nome: "Bilanciato3", categoria: "Bilanciato", vita: 1, attacco: 0, velocita: 0 },
+            { tipo: "Messaggero", nome: "Bilanciato4", categoria: "Bilanciato", vita: 1, attacco: 0, velocita: 0 },
             { tipo: "Messaggero", nome: "Tank1", categoria: "Tank", vita: 1.5, attacco: 0, velocita: 0 },
+            { tipo: "Messaggero", nome: "Tank2", categoria: "Tank", vita: 1.5, attacco: 0, velocita: 0 },
+            { tipo: "Messaggero", nome: "Attaccante1", categoria: "Attaccante", vita: 1, attacco: 0.5, velocita: 0 },
+            { tipo: "Messaggero", nome: "Attaccante2", categoria: "Attaccante", vita: 1, attacco: 0.5, velocita: 0 },
+            { tipo: "Messaggero", nome: "Velocista1", categoria: "Velocista", vita: 1, attacco: 0, velocita: 0.5 },
+            { tipo: "Messaggero", nome: "Velocista2", categoria: "Velocista", vita: 1, attacco: 0, velocita: 0.5 },
             { tipo: "Carta", nome: "+1 Vita Permanente" },
-            { tipo: "Carta", nome: "Scambia Messaggero" },
+            { tipo: "Carta", nome: "+1 Vita Permanente" },
+            { tipo: "Carta", nome: "+1 Attacco Temporaneo" },
+            { tipo: "Carta", nome: "+1 Velocità Temporanea" },
+            { tipo: "Carta", nome: "Divieto di Attacco" },
+            { tipo: "Carta", nome: "Ruba Alfa" },
+            { tipo: "Carta", nome: "Ruba Beta" },
+            { tipo: "Carta", nome: "Recupera un Messaggero Sconfitto" },
+            { tipo: "Carta", nome: "Scambia Messaggero" }
         ];
 
-        let mazzoUnificato;
-        let giocatore1;
-        let giocatore2;
-        let segnalinoVelocita;
-        let turno;
+        let mazzoUnificato, giocatore1, giocatore2, segnalinoVelocita, turno;
         let logDiv = document.getElementById("log");
         let actionsDiv = document.getElementById("actions");
         let handDiv = document.getElementById("hand");
@@ -151,18 +162,67 @@
             `;
             actionsDiv.innerHTML = `
                 <h3>Turno di ${giocatoreAttivo.nome}</h3>
-                <button onclick="resetGioco()">Restart</button>
-                <button onclick="dionisMaestro()">Dionis sei il mio maestro!</button>
+                <button onclick="allocaRisorsa('alfa')">Allocare Risorsa Alfa</button>
+                <button onclick="allocaRisorsa('beta')">Allocare Risorsa Beta</button>
+                <button onclick="attivaCarta()">Attivare una Carta</button>
+                <button onclick="scambiaMessaggero()">Scambiare Messaggero</button>
                 <button onclick="attacca()">Attaccare</button>
+                <button onclick="resetGioco()">Restart</button>
             `;
         }
 
-        function dionisMaestro() {
-            scriviLog("Karlo Drogo usa Luna Piena ma si incula da solo.");
+        function allocaRisorsa(tipo) {
+            scriviLog(`${tipo === 'alfa' ? 'Risorsa Alfa' : 'Risorsa Beta'} allocata!`);
+            turno++;
+            aggiornaStato();
+            mostraScelte();
+        }
+
+        function attivaCarta() {
+            scriviLog("Carta attivata! (logica da implementare)");
+            turno++;
+            aggiornaStato();
+            mostraScelte();
+        }
+
+        function scambiaMessaggero() {
+            const giocatoreAttivo = turno % 2 === 0 ? giocatore1 : giocatore2;
+            if (giocatoreAttivo === segnalinoVelocita || giocatoreAttivo.mano.some(c => c.nome === "Scambia Messaggero")) {
+                scriviLog(`${giocatoreAttivo.nome} scambia il Messaggero attivo.`);
+                turno++;
+                aggiornaStato();
+                mostraScelte();
+            } else {
+                scriviLog("Non puoi scambiare il Messaggero in questo momento!");
+            }
         }
 
         function attacca() {
-            scriviLog("Attacco effettuato! (logica da implementare)");
+            const giocatoreAttivo = turno % 2 === 0 ? giocatore1 : giocatore2;
+            const avversario = turno % 2 === 0 ? giocatore2 : giocatore1;
+
+            if (!giocatoreAttivo.messaggeroAttivo || !avversario.messaggeroAttivo) {
+                scriviLog("Attacco non possibile: uno dei giocatori non ha un Messaggero attivo.");
+                return;
+            }
+
+            const danno = giocatoreAttivo.messaggeroAttivo.attacco;
+            avversario.messaggeroAttivo.vita -= danno;
+
+            if (avversario.messaggeroAttivo.vita <= 0) {
+                avversario.puntiVita -= 1;
+                scriviLog(`${giocatoreAttivo.nome} sconfigge il Messaggero di ${avversario.nome}!`);
+                avversario.messaggeroAttivo = null;
+            } else {
+                scriviLog(`${giocatoreAttivo.nome} infligge ${danno} danni a ${avversario.nome}!`);
+            }
+
+            if (avversario.puntiVita <= 0) {
+                scriviLog(`${giocatoreAttivo.nome} ha vinto la partita!`);
+                actionsDiv.innerHTML = `<h2>${giocatoreAttivo.nome} è il vincitore!</h2>`;
+                return;
+            }
+
             turno++;
             aggiornaStato();
             mostraScelte();
